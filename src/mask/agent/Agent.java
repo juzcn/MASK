@@ -89,6 +89,7 @@ public class Agent extends RunUnit implements Serializable {
     public static String process() {
         return MKExecutor.getExecutor().process();
     }
+
     protected String getProcess() {
         return process;
     }
@@ -103,9 +104,10 @@ public class Agent extends RunUnit implements Serializable {
 
     @Override
     public void setup() {
-        this.recordCondition = new TimeCondition(time() + 1);
-        this.getGlobalHehaviors().add(new Behavior(recordCondition, () -> atTimeBegin()));
-
+        if (MKExecutor.getExecutor().isLoggingEnabled()) {
+            this.recordCondition = new TimeCondition(time() + 1);
+            this.getGlobalHehaviors().add(new Behavior(recordCondition, () -> atTimeBegin()));
+        }
     }
 
     protected boolean atTimeBegin() {
@@ -153,9 +155,10 @@ public class Agent extends RunUnit implements Serializable {
 
     @Override
     public void stop() {
-        world().logging(getCopy());
+        if (MKExecutor.getExecutor().isLoggingEnabled()) {
+            world().logging(getCopy());
+        }
     }
-
 
     /**
      * @return the time

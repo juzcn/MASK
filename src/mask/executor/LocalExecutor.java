@@ -22,6 +22,12 @@ public class LocalExecutor<T extends LocalConfig<? extends IWorld>> extends Mast
         service.setup();
     }
 
+    public LocalExecutor(T modelConfig) {
+        super(modelConfig);
+        service = new MKService();
+        service.setup();
+    }
+
     public RunGroup container() {
         return config.getContainer();
     }

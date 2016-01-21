@@ -38,12 +38,32 @@ public abstract class MasterExecutor<T extends MasterConfig<? extends IWorld>> e
     private FileLogging fileLogging;
     private State state;
 
+    public static LocalExecutor newLocalComputing(LocalConfig config) {
+        executor = new LocalExecutor(config);
+        return (LocalExecutor) executor;
+    }
+
+    public static DistributedExecutor newDistributedComputing(DistributedConfig config) {
+        executor = new DistributedExecutor(config);
+        return (DistributedExecutor) executor;
+    }
+
     public MasterExecutor(T config, Monitor monitor, FileLogger... loggers) {
         super(config);
         this.monitor = monitor;
         if (loggers != null) {
             this.fileLogging = new FileLogging(loggers);
         }
+    }
+
+    public MasterExecutor(T config) {
+        super(config);
+        config.disableLogging();
+    }
+
+    public void start(int maxTime) {
+        this.maxTime = maxTime;
+        run();
     }
 
     public int steps() {
@@ -372,11 +392,30 @@ public abstract class MasterExecutor<T extends MasterConfig<? extends IWorld>> e
 
     @Override
     public void run() {
-        setup();
-        prepare();
-        cycleRun();
-        stopRun();
-        afterStop();
+        if (this.isLoggingEnabled()) {
+            setup();
+            prepare();
+            cycleRun();
+            stopRun();
+            afterStop();
+        } else {
+            prepare();
+            for (time = 1; time <= maxTime; time++) {
+                world().timeTicked();
+                System.out.println("timeTick =" + time);
+                for (step = 1; step <= steps(); step++) {
+                    do {
+                        world().setChanged(false);
+                        stepRun();
+                    } while (world().isChanged());
+                }
+                if (service.getAgentNumber() == 0) {
+                    break;
+                }
+            }
+            stopRun();
+            world().close();
+        }
     }
 
 }

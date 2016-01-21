@@ -71,4 +71,7 @@ public abstract class MKExecutor<T extends MKConfig<? extends IWorld>> implement
         return service;
     }
 
+    public boolean isLoggingEnabled() {
+        return config.isLoggingEnabled();
+    }
 }

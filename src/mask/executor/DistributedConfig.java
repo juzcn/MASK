@@ -41,4 +41,11 @@ public class DistributedConfig<T extends IWorld> extends MasterConfig<T> impleme
         return null;
     }
 
+    @Override
+    public void disableLogging() {
+        super.disableLogging();
+        for (RemoteConfig r : remotes) {
+            r.disableLogging();
+        }
+    }
 }

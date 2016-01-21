@@ -22,6 +22,12 @@ public class DistributedExecutor<T extends DistributedConfig<? extends IWorld>> 
         service.setup();
     }
 
+    public DistributedExecutor(T config) {
+        super(config);
+        service = (IService) Utils.getBean("java:global.MASKBeans.MASKBeans-ejb.ServiceBean");
+        service.setup();
+    }
+
     @Override
     protected void stopRun() {
         service.sendToExecutorGroup("Stop");

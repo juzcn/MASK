@@ -17,6 +17,15 @@ public class MKConfig<T extends IWorld> implements Serializable {
 
     protected String process = "Mask";
     protected transient T world = null;
+    private boolean logging = true;
+
+    public void disableLogging() {
+        logging = false;
+    }
+
+    public boolean isLoggingEnabled() {
+        return logging;
+    }
 
     public IService service() {
         return MKExecutor.getExecutor().getService();
