@@ -14,7 +14,7 @@ import mask.utils.Utils;
  *
  * @author zj
  */
-public class DistributedExecutor<T extends DistributedConfig<? extends IWorld>> extends MasterExecutor<T> {
+public class DistributedExecutor<T extends DistributedModel<? extends IWorld>> extends MasterExecutor<T> {
 
     public DistributedExecutor(T config, Monitor monitor, FileLogger... loggers) {
         super(config, monitor, loggers);

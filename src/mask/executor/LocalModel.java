@@ -14,15 +14,15 @@ import mask.world.IWorld;
  *
  * @author zj
  */
-public abstract class LocalConfig<T extends IWorld> extends MasterConfig<T> implements IContainer {
+public abstract class LocalModel<T extends IWorld> extends Model<T> implements IContainer {
 
     private RunGroup container;
 
-    public LocalConfig(Class<T> beanClass) {
+    public LocalModel(Class<T> beanClass) {
         try {
             world = (T) beanClass.newInstance();
         } catch (InstantiationException | IllegalAccessException ex) {
-            Logger.getLogger(LocalConfig.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(LocalModel.class.getName()).log(Level.SEVERE, null, ex);
         }
         world.setup();
     }

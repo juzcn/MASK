@@ -27,7 +27,7 @@ import mask.world.IWorld;
  * @author zj
  * @param <T>
  */
-public abstract class MasterExecutor<T extends MasterConfig<? extends IWorld>> extends MKExecutor<T> {
+public abstract class MasterExecutor<T extends Model<? extends IWorld>> extends MKExecutor<T> {
 
     protected IMonitor monitor;
     protected int maxTime = 100;
@@ -38,12 +38,12 @@ public abstract class MasterExecutor<T extends MasterConfig<? extends IWorld>> e
     private FileLogging fileLogging;
     private State state;
 
-    public static LocalExecutor newLocalComputing(LocalConfig config) {
+    public static LocalExecutor newLocalComputing(LocalModel config) {
         executor = new LocalExecutor(config);
         return (LocalExecutor) executor;
     }
 
-    public static DistributedExecutor newDistributedComputing(DistributedConfig config) {
+    public static DistributedExecutor newDistributedComputing(DistributedModel config) {
         executor = new DistributedExecutor(config);
         return (DistributedExecutor) executor;
     }

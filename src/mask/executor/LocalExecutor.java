@@ -14,7 +14,7 @@ import mask.service.MKService;
  *
  * @author zj
  */
-public class LocalExecutor<T extends LocalConfig<? extends IWorld>> extends MasterExecutor<T> {
+public class LocalExecutor<T extends LocalModel<? extends IWorld>> extends MasterExecutor<T> {
 
     public LocalExecutor(T modelConfig, Monitor monitor, FileLogger... loggers) {
         super(modelConfig, monitor, loggers);

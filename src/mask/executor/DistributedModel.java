@@ -14,11 +14,11 @@ import mask.world.IWorld;
  * @author zj
  * @param <T>
  */
-public class DistributedConfig<T extends IWorld> extends MasterConfig<T> implements Serializable {
+public class DistributedModel<T extends IWorld> extends Model<T> implements Serializable {
 
     private final RemoteConfig[] remotes;
 
-    public DistributedConfig(String beanName, RemoteConfig... remotes) {
+    public DistributedModel(String beanName, RemoteConfig... remotes) {
         world = (T) Utils.getBean(beanName);
         world.setup();
         process = "DistributedMask";

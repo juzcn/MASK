@@ -11,7 +11,7 @@ import mask.world.IWorld;
  *
  * @author zj
  */
-public class MasterConfig<T extends IWorld> extends MKConfig<T> {
+public class Model<T extends IWorld> extends MKConfig<T> {
 
     private int steps = 1;
 

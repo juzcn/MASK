@@ -12,6 +12,7 @@ import mask.logging.FileLogger;
 /**
  *
  * @author zj
+ * @param <T>
  */
 public abstract class MKExecutor<T extends MKConfig<? extends IWorld>> implements Runnable {
 
@@ -25,12 +26,12 @@ public abstract class MKExecutor<T extends MKConfig<? extends IWorld>> implement
         return executor;
     }
 
-    public static LocalExecutor newLocalExecutor(LocalConfig config, Monitor monitor, FileLogger... loggers) {
+    public static LocalExecutor newLocalExecutor(LocalModel config, Monitor monitor, FileLogger... loggers) {
         executor = new LocalExecutor(config, monitor, loggers);
         return (LocalExecutor) executor;
     }
 
-    public static DistributedExecutor newDistributedExecutor(DistributedConfig config, Monitor monitor, FileLogger... loggers) {
+    public static DistributedExecutor newDistributedExecutor(DistributedModel config, Monitor monitor, FileLogger... loggers) {
         executor = new DistributedExecutor(config, monitor, loggers);
         return (DistributedExecutor) executor;
     }

@@ -36,7 +36,7 @@ public class RemoteExecutor<T extends RemoteConfig<? extends IWorld>> extends MK
         // step 1: 连接到服务器,报告Ready
         service.sendToExecutor("Ready");  // R-D Send1
         // step2: 接受服务器配置
-        DistributedConfig dconfig = service.waitReceive(remoteID); //D-R Receive 1
+        DistributedModel dconfig = service.waitReceive(remoteID); //D-R Receive 1
         config = (T) dconfig.getRemoteConfig(process);
         config.initWorld();
         // step 3  container setup
