@@ -18,6 +18,10 @@ public abstract class LocalModel<T extends IWorld> extends Model<T> implements I
 
     private RunGroup container;
 
+    public LocalModel() {
+        world = null;
+    }
+
     public LocalModel(Class<T> beanClass) {
         try {
             world = (T) beanClass.newInstance();

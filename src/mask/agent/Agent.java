@@ -28,7 +28,7 @@ public class Agent extends RunUnit implements Serializable {
     protected final transient Map<Enum, List<Behavior>> stateBehaviors = new HashMap<>();
     protected Enum state;
     private static final Map<String, Integer> agentMap = new HashMap<>();
-    private TimeCondition recordCondition;
+    private AtTimeCondition recordCondition;
     private int time;
     private final String name;
     private final int sequence;
@@ -105,14 +105,14 @@ public class Agent extends RunUnit implements Serializable {
     @Override
     public void setup() {
         if (MKExecutor.getExecutor().isLoggingEnabled()) {
-            this.recordCondition = new TimeCondition(time() + 1);
-            this.getGlobalHehaviors().add(new Behavior(recordCondition, () -> atTimeBegin()));
+            this.recordCondition = new AtTimeCondition(time() + 1);
+            this.getGlobalHehaviors().add(new Behavior(recordCondition, () -> logging()));
         }
     }
 
-    protected boolean atTimeBegin() {
+    protected boolean logging() {
 //        System.out.println(time() + " at time begin "+ this);
-        world().logging(getCopy());
+        service().logging(getCopy());
         time = time();
         this.recordCondition.setAtTime(time() + 1);
         return false;
@@ -124,7 +124,7 @@ public class Agent extends RunUnit implements Serializable {
             for (Behavior b : globalBehaviors) {
                 if (b.getCondition().evalue()) {
                     if (b.getHandler().handle()) {
-                        world().setChanged(true);
+                        service().setChanged(true);
                     }
                 }
             }
@@ -134,7 +134,7 @@ public class Agent extends RunUnit implements Serializable {
             for (Behavior b : behaviors) {
                 if (b.getCondition().evalue()) {
                     if (b.getHandler().handle()) {
-                        world().setChanged(true);
+                        service().setChanged(true);
                     }
                 }
             }
@@ -156,7 +156,7 @@ public class Agent extends RunUnit implements Serializable {
     @Override
     public void stop() {
         if (MKExecutor.getExecutor().isLoggingEnabled()) {
-            world().logging(getCopy());
+            service().logging(getCopy());
         }
     }
 

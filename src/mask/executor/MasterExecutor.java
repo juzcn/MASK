@@ -222,7 +222,7 @@ public abstract class MasterExecutor<T extends Model<? extends IWorld>> extends 
         setState(State.Loaded);
         for (time = 1; time <= maxTime; time++) {
 
-            world().timeTicked();
+            service.timeTicked();
             System.out.println("timeTick =" + time);
 
             world().logging();
@@ -265,9 +265,9 @@ public abstract class MasterExecutor<T extends Model<? extends IWorld>> extends 
 
             for (step = 1; step <= steps(); step++) {
                 do {
-                    world().setChanged(false);
+                    service.setChanged(false);
                     stepRun();
-                } while (world().isChanged());
+                } while (service.isChanged());
             }
             if (service.getAgentNumber() == 0) {
                 break;
@@ -275,11 +275,11 @@ public abstract class MasterExecutor<T extends Model<? extends IWorld>> extends 
 
             if (monitor == null) {
                 if (fileLogging != null) {
-                    fileLogging.process(world().getAgents());
+                    fileLogging.process(service.getLogging());
                 }
             } else {
                 updateAgent2 = monitorThread.submit(() -> {
-                    Agent[] agents = world().getAgents();
+                    Agent[] agents = service.getLogging();
                     if (fileLogging != null) {
                         fileLogging.process(agents);
                     }
@@ -360,12 +360,12 @@ public abstract class MasterExecutor<T extends Model<? extends IWorld>> extends 
         if (monitor == null) {
             if (fileLogging != null) {
                 fileLogging.process(world().getWorld());
-                fileLogging.process(world().getAgents());
+                fileLogging.process(service.getLogging());
             }
         } else {
             monitorThread.submit(() -> {
                 World w = world().getWorld();
-                Agent[] agents = world().getAgents();
+                Agent[] agents = service.getLogging();
                 if (fileLogging != null) {
                     fileLogging.process(w);
                     fileLogging.process(agents);
@@ -375,7 +375,7 @@ public abstract class MasterExecutor<T extends Model<? extends IWorld>> extends 
             });
         }
         // step 10: close world
-        world().close();
+//        world().close();
         // step 12: close trace file
         stopLogging();
         setState(State.Stopped);
@@ -401,20 +401,20 @@ public abstract class MasterExecutor<T extends Model<? extends IWorld>> extends 
         } else {
             prepare();
             for (time = 1; time <= maxTime; time++) {
-                world().timeTicked();
+                service.timeTicked();
                 System.out.println("timeTick =" + time);
                 for (step = 1; step <= steps(); step++) {
                     do {
-                        world().setChanged(false);
+                        service.setChanged(false);
                         stepRun();
-                    } while (world().isChanged());
+                    } while (service.isChanged());
                 }
                 if (service.getAgentNumber() == 0) {
                     break;
                 }
             }
             stopRun();
-            world().close();
+//            world().close();
         }
     }
 

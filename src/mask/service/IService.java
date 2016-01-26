@@ -7,6 +7,7 @@ package mask.service;
 
 import java.io.Serializable;
 import java.util.List;
+import mask.agent.Agent;
 
 /**
  *
@@ -56,5 +57,15 @@ public interface IService extends ISimpleMessaging {
     public <T extends Serializable> T getResult();
 
     public <T extends Serializable> List<T> getAllResults();
+
+    public void logging(Agent agent);
+
+    public Agent[] getLogging();
+
+    public default void timeTicked() {
+    }
+    public void setChanged(boolean changed);
+
+    public boolean isChanged();
 
 }

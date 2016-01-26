@@ -6,11 +6,9 @@
 package mask.world;
 
 import java.io.Serializable;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import mask.agent.Agent;
 import mask.service.SimpleMessaging;
 import mask.utils.Utils;
 import static mask.utils.Utils.deepCopy;
@@ -21,15 +19,12 @@ import static mask.utils.Utils.deepCopy;
  */
 public abstract class World extends SimpleMessaging implements IWorld, Serializable {
 
-    protected transient AtomicBoolean changed = new AtomicBoolean();
-    private transient int loggingMailBoxID;
     private transient int worldMailBoxID;
     private transient boolean remote = false;
     private transient Class<World> worldClass;
 
     @Override
     public void setup() {
-        loggingMailBoxID = newChannel();
         worldMailBoxID = newChannel();
         remote = false;
 
@@ -50,26 +45,8 @@ public abstract class World extends SimpleMessaging implements IWorld, Serializa
 
     }
 
-    @Override
-    public boolean isChanged() {
-        return changed.get();
-    }
 
-    /**
-     * @param changed
-     */
-    @Override
-    public void setChanged(boolean changed) {
-        this.changed.set(changed);
-    }
 
-    @Override
-    public void timeTicked() {
-    }
-
-    @Override
-    public void close() {
-    }
 
     @Override
     public World getWorld() {
@@ -99,21 +76,5 @@ public abstract class World extends SimpleMessaging implements IWorld, Serializa
         return w;
     }
 
-    @Override
-    public void logging(Agent agent) {
-        send(loggingMailBoxID, agent);
-    }
-
-    @Override
-    public Agent[] getAgents() {
-        List<Agent> list = receiveAll(loggingMailBoxID);
-        if (list.isEmpty()) {
-            return null;
-        }
-        Agent[] as = new Agent[list.size()];
-        list.toArray(as);
-        return as;
-
-    }
 
 }

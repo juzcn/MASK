@@ -12,7 +12,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import mask.agent.Agent;
 
 /**
  *
@@ -28,6 +30,8 @@ public class MKService extends SimpleMessaging implements IService {
     private final transient AtomicInteger nextChannelGroup = new AtomicInteger(0);
     private transient final AtomicInteger nextAgentID = new AtomicInteger(0);
     private transient final Map<String, Integer> agentDirectory = Collections.synchronizedMap(new HashMap<>());
+    private transient int loggingChannel;
+    protected transient AtomicBoolean changed = new AtomicBoolean();
 
     @Override
     public void setup() {
@@ -38,6 +42,7 @@ public class MKService extends SimpleMessaging implements IService {
         channelGroups.clear();
         agentDirectory.clear();
         channels.clear();
+        loggingChannel = newChannel();
         executorChannel = newChannel();
         resultChannel = newChannel();
         executorChannelGroup = newChannelGroup();
@@ -188,6 +193,36 @@ public class MKService extends SimpleMessaging implements IService {
     @Override
     public <T extends Serializable> List<T> getAllResults() {
         return receiveAll(resultChannel);
+    }
+
+    @Override
+    public void logging(Agent agent) {
+        send(loggingChannel, agent);
+    }
+
+    @Override
+    public Agent[] getLogging() {
+        List<Agent> list = receiveAll(loggingChannel);
+        if (list.isEmpty()) {
+            return null;
+        }
+        Agent[] as = new Agent[list.size()];
+        list.toArray(as);
+        return as;
+
+    }
+
+    @Override
+    public boolean isChanged() {
+        return changed.get();
+    }
+
+    /**
+     * @param changed
+     */
+    @Override
+    public void setChanged(boolean changed) {
+        this.changed.set(changed);
     }
 
 }

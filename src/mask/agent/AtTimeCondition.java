@@ -12,11 +12,11 @@ import java.io.Serializable;
  *
  * @author zj
  */
-public class TimeCondition implements Condition, Serializable  {
+public class AtTimeCondition implements Condition, Serializable  {
 
-    private long atTime;
+    private int atTime;
 
-    public TimeCondition(long atTime) {
+    public AtTimeCondition(int atTime) {
         this.atTime = atTime;
     }
 
@@ -25,7 +25,7 @@ public class TimeCondition implements Condition, Serializable  {
         return (MKExecutor.getExecutor().getTime() == atTime);
     }
 
-    public void setAtTime(long atTime) {
+    public void setAtTime(int atTime) {
         this.atTime = atTime;
     }
 }
