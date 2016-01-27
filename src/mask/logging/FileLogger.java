@@ -9,7 +9,7 @@ package mask.logging;
  *
  * @author zj
  */
-public interface FileLogger extends MKLogger {
+public interface FileLogger extends ILogger {
 
     public void start();
 

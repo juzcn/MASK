@@ -6,13 +6,13 @@
 package mask.executor;
 
 import mask.executor.MasterExecutor.State;
-import mask.logging.MKLogger;
+import mask.logging.ILogger;
 
 /**
  *
  * @author zj
  */
-public interface IMonitor extends MKLogger {
+public interface IMonitor extends ILogger {
 
     public void durationCallBack(int duration);
 

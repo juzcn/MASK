@@ -21,9 +21,8 @@ public interface IService extends ISimpleMessaging {
 
     public <T extends Serializable> void send(int senderID, int channel, T content);
 
-    public <T extends Serializable> void send(int senderID, int receiverID, String mailBoxName, T content);
+    public <T extends Serializable> void send(int senderID, int receiverID, String channelName, T content);
 
-//    public <T extends Serializable> T executorWaitReceive();
     public <T extends Serializable> void sendToExecutor(T message);
 
     public int newChannelGroup();

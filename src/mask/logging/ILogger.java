@@ -12,7 +12,7 @@ import mask.world.World;
  *
  * @author zj
  */
-public interface MKLogger {
+public interface ILogger {
 
     public void process(Agent[] agents);
 
