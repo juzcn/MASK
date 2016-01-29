@@ -177,26 +177,23 @@ public abstract class MasterExecutor<T extends Model<? extends IWorld>> extends 
                 beginMills = System.currentTimeMillis();
             }
 
-            if (time == pauseAt) {
-                setState(State.Paused);
-                try {
-                    commands.offer(commands.take());
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(MasterExecutor.class.getName()).log(Level.SEVERE, null, ex);
+            while (true) {
+                if (time == pauseAt) {
+                    setState(State.Paused);
+                    try {
+                        commands.offer(commands.take());
+                    } catch (InterruptedException ex) {
+                        Logger.getLogger(MasterExecutor.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    setState(State.Running);
+                    pauseAt = 0;
                 }
-                setState(State.Running);
-            }
-
-            while ((command = commands.poll()) != null) {
+                if ((command = commands.poll()) == null) {
+                    break;
+                }
                 switch (command) {
                     case Pause:
-                        setState(State.Paused);
-                        try {
-                            commands.offer(commands.take());
-                        } catch (InterruptedException ex) {
-                            Logger.getLogger(MasterExecutor.class.getName()).log(Level.SEVERE, null, ex);
-                        }
-                        setState(State.Running);
+                        pauseAt = time;
                         break;
                     case Run:
                         break;
