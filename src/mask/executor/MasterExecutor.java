@@ -7,16 +7,9 @@ package mask.executor;
 
 import java.io.Serializable;
 import java.util.List;
-import mask.world.World;
-import mask.agent.Agent;
-import mask.logging.FileLogger;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import mask.logging.FileLogging;
@@ -29,37 +22,41 @@ import mask.world.IWorld;
  */
 public abstract class MasterExecutor<T extends Model<? extends IWorld>> extends MKExecutor<T> {
 
-    protected IMonitor monitor;
+    protected IExecutorCallBack callback;
     private int maxTime = 100;
     private int pauseAt = 0;
     private int duration = 0;
 
     protected BlockingQueue<Command> commands = new LinkedBlockingQueue<>();
-    protected ExecutorService monitorThread;
-    private FileLogging fileLogging;
     private State state;
 
-    public static LocalExecutor newLocalComputing(LocalModel config) {
+    public static LocalExecutor newLocalExecutor(LocalModel config) {
         executor = new LocalExecutor(config);
         return (LocalExecutor) executor;
     }
 
-    public static DistributedExecutor newDistributedComputing(DistributedModel config) {
+    public static DistributedExecutor newDistributedExecutor(DistributedModel config) {
         executor = new DistributedExecutor(config);
         return (DistributedExecutor) executor;
     }
 
-    public MasterExecutor(T config, Monitor monitor, FileLogger... loggers) {
+    public static LocalExecutor newLocalExecutor(LocalModel config, IExecutorCallBack callback) {
+        executor = new LocalExecutor(config, callback);
+        return (LocalExecutor) executor;
+    }
+
+    public static DistributedExecutor newDistributedExecutor(DistributedModel config, IExecutorCallBack callback) {
+        executor = new DistributedExecutor(config, callback);
+        return (DistributedExecutor) executor;
+    }
+
+    public MasterExecutor(T config, IExecutorCallBack callback) {
         super(config);
-        this.monitor = monitor;
-        if (loggers != null) {
-            this.fileLogging = new FileLogging(loggers);
-        }
+        this.callback = callback;
     }
 
     public MasterExecutor(T config) {
         super(config);
-        config.disableLogging();
     }
 
     public void start(int maxTime) {
@@ -105,147 +102,18 @@ public abstract class MasterExecutor<T extends Model<? extends IWorld>> extends 
         Running, Stopped, Paused
     }
 
-    public void cycleRun() {
-        Future<?> updateWorld1 = null;
-        Future<?> updateWorld2 = null;
-        Future<?> updateAgent1 = null;
-        Future<?> updateAgent2 = null;
-
-        for (time = 1; time <= maxTime; time++) {
-
-            System.out.println("Time =" + time);
-
-            world().logging();
-            if (monitor == null) {
-                if (fileLogging != null) {
-                    fileLogging.process(world().getWorld());
-                }
-            } else {
-                updateWorld2 = monitorThread.submit(() -> {
-                    World w = world().getWorld();
-                    if (fileLogging != null) {
-                        fileLogging.process(w);
-                    }
-                    monitor.process(w);
-                });
-                if (time == 1) {
-                    try {
-                        updateWorld2.get();
-                    } catch (InterruptedException | ExecutionException ex) {
-                        Logger.getLogger(MasterExecutor.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                } else {
-                    if (updateWorld1 != null) {
-                        try {
-                            updateWorld1.get();
-                        } catch (InterruptedException | ExecutionException ex) {
-                            Logger.getLogger(MasterExecutor.class.getName()).log(Level.SEVERE, null, ex);
-                        }
-                    }
-                    updateWorld1 = updateWorld2;
-                }
-            }
-
-            for (step = 1; step <= steps(); step++) {
-                do {
-                    service.setChanged(false);
-                    loopRun();
-                } while (service.isChanged());
-            }
-            if (service.getAgentNumber() == 0) {
-                break;
-            }
-
-            if (monitor == null) {
-                if (fileLogging != null) {
-                    fileLogging.process(service.getLogging());
-                }
-            } else {
-                updateAgent2 = monitorThread.submit(() -> {
-                    Agent[] agents = service.getLogging();
-                    if (fileLogging != null) {
-                        fileLogging.process(agents);
-                    }
-                    monitor.process(agents);
-                });
-                if (updateAgent1 != null) {
-                    try {
-                        updateAgent1.get();
-                    } catch (InterruptedException | ExecutionException ex) {
-                        Logger.getLogger(MasterExecutor.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-                updateAgent1 = updateAgent2;
-            }
-
-        }
-    }
 
     public State getState() {
         return state;
     }
 
-    public void startLogging() {
-        if (fileLogging != null) {
-            fileLogging.start();
-        }
-        if (monitor != null) {
-            monitorThread = Executors.newSingleThreadExecutor();
-
-        }
-    }
-
-    public void stopLogging() {
-        if (fileLogging != null) {
-            fileLogging.stop();
-        }
-
-        if (monitor != null) {
-            monitorThread.shutdown();
-            try {
-                monitorThread.awaitTermination(1, TimeUnit.DAYS);
-            } catch (InterruptedException ex) {
-                Logger.getLogger(MasterExecutor.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-    }
 
     protected abstract void loopRun();
-
-    protected void setup() {
-        startLogging();
-    }
 
     protected abstract void prepare();
 
     protected abstract void stopRun();
 
-    protected void afterStop() {
-        world().logging();
-        // step 11: write last looging record
-        if (monitor == null) {
-            if (fileLogging != null) {
-                fileLogging.process(world().getWorld());
-                fileLogging.process(service.getLogging());
-            }
-        } else {
-            monitorThread.submit(() -> {
-                World w = world().getWorld();
-                Agent[] agents = service.getLogging();
-                if (fileLogging != null) {
-                    fileLogging.process(w);
-                    fileLogging.process(agents);
-                }
-                monitor.process(w);
-                monitor.process(agents);
-            });
-        }
-        // step 10: close world
-//        world().close();
-        // step 12: close trace file
-        stopLogging();
-
-    }
 
     public <T extends Serializable> T getResult() {
         return service.getResult();
@@ -285,77 +153,102 @@ public abstract class MasterExecutor<T extends Model<? extends IWorld>> extends 
     private long beginMills;
     private long waitMills;
 
+    private void setState(State state) {
+        this.state = state;
+        if (callback != null) {
+            callback.state(state);
+        }
+    }
+
     @Override
     public void run() {
-        state = State.Running;
+        setState(State.Running);
+        prepare();
 
-        if (this.isLoggingEnabled()) {
-            setup();
-            prepare();
-            cycleRun();
-            stopRun();
-            afterStop();
-        } else {
-            prepare();
-            forLabel:
-            for (time = 1; time <= maxTime; time++) {
-                System.out.println("Time =" + time);
+        forLabel:
+        for (time = 1; time <= maxTime; time++) {
+            System.out.println("Time =" + time);
 
-                if (duration > 0) {
-                    beginMills = System.currentTimeMillis();
-                }
+            if (callback != null) {
+                callback.time(time);
+            }
 
-                while ((command = commands.poll()) != null) {
-                    if (time == pauseAt) {
-                        state = State.Paused;
-                        try {
-                            commands.offer(commands.take());
-                        } catch (InterruptedException ex) {
-                            Logger.getLogger(MasterExecutor.class.getName()).log(Level.SEVERE, null, ex);
-                        }
-                        state = State.Running;
+            if (this.isLoggingEnabled() && world() != null) {
+                world().logging();
+            }
+            if (duration > 0) {
+                beginMills = System.currentTimeMillis();
+            }
+
+            while ((command = commands.poll()) != null) {
+                if (time == pauseAt) {
+                    setState(State.Paused);
+                    try {
+                        commands.offer(commands.take());
+                    } catch (InterruptedException ex) {
+                        Logger.getLogger(MasterExecutor.class.getName()).log(Level.SEVERE, null, ex);
                     }
-                    switch (command) {
-                        case Pause:
-                            pauseAt = time;
-                            break;
-                        case Run:
-                            break;
-                        case StepRun:
-                            pauseAt = time + 1;
-                            break;
-                        case Stop:
-                            break forLabel;
-                    }
+                    setState(State.Running);
                 }
-
-                for (step = 1; step <= steps(); step++) {
-                    do {
-                        service.setChanged(false);
-                        loopRun();
-                    } while (service.isChanged());
+                switch (command) {
+                    case Pause:
+                        pauseAt = time;
+                        break;
+                    case Run:
+                        break;
+                    case StepRun:
+                        pauseAt = time + 1;
+                        break;
+                    case Stop:
+                        break forLabel;
                 }
+            }
 
-                if (service.getAgentNumber() == 0) {
-                    break;
-                }
+            if (callback != null && world() != null) {
+                callback.world(world().getWorld());
+            }
 
-                if (duration > 0) {
-                    waitMills = duration - System.currentTimeMillis() + beginMills;
-                    if (waitMills > 0) {
-                        try {
-                            Thread.sleep(waitMills);
-                        } catch (InterruptedException ex) {
-                            Logger.getLogger(MasterExecutor.class.getName()).log(Level.SEVERE, null, ex);
-                        }
+            for (step = 1; step <= steps(); step++) {
+                do {
+                    service.setChanged(false);
+                    loopRun();
+                } while (service.isChanged());
+            }
+
+            if (callback != null) {
+                callback.agents(service.getLogging());
+            }
+            if (service.getAgentNumber() == 0) {
+                break;
+            }
+
+            if (duration > 0) {
+                waitMills = duration - System.currentTimeMillis() + beginMills;
+                if (waitMills > 0) {
+                    try {
+                        Thread.sleep(waitMills);
+                    } catch (InterruptedException ex) {
+                        Logger.getLogger(MasterExecutor.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
             }
-            
-            stopRun();
-            state = State.Stopped;
-
         }
+
+        stopRun();
+
+        if (this.isLoggingEnabled() && world() != null) {
+            world().logging();
+        }
+
+        if (callback != null) {
+            if (world() != null) {
+                callback.world(world().getWorld());
+            }
+            callback.agents(service.getLogging());
+        }
+
+        setState(State.Stopped);
+
     }
 
 }

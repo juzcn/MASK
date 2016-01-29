@@ -5,7 +5,6 @@
  */
 package mask.executor;
 
-import mask.logging.FileLogger;
 import mask.rununit.RunGroup;
 import mask.world.IWorld;
 import mask.service.MKService;
@@ -16,8 +15,8 @@ import mask.service.MKService;
  */
 public class LocalExecutor<T extends LocalModel<? extends IWorld>> extends MasterExecutor<T> {
 
-    public LocalExecutor(T modelConfig, Monitor monitor, FileLogger... loggers) {
-        super(modelConfig, monitor, loggers);
+    public LocalExecutor(T modelConfig, IExecutorCallBack callback) {
+        super(modelConfig, callback);
         service = new MKService();
         service.setup();
     }

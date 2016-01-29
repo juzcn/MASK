@@ -27,7 +27,7 @@ import mask.executor.MasterExecutor.State;
  *
  * @author zj
  */
-public abstract class Monitor extends Application implements IMonitor {
+public abstract class Monitor extends Application implements IExecutorCallBack {
 
 //    private final Image PlayButtonImage = new Image(Monitor.class.getResourceAsStream("playbutton.png"));
     public Label currentValue;
@@ -38,17 +38,12 @@ public abstract class Monitor extends Application implements IMonitor {
     }
 
     @Override
-    public void durationCallBack(int duration) {
-        Platform.runLater(() -> durationValue.setText(Long.toString(duration)));
-    }
-
-    @Override
-    public void timeCallBack(int time) {
+    public void time(int time) {
         Platform.runLater(() -> currentValue.setText(Long.toString(time)));
     }
 
     @Override
-    public void stateCallBack(State state) {
+    public void state(State state) {
         Platform.runLater(() -> stateLabel.setText(state.toString()));
 
     }
@@ -195,10 +190,10 @@ public abstract class Monitor extends Application implements IMonitor {
     }
 
     @Override
-    public abstract void process(Agent[] agents);
+    public abstract void agents(Agent[] agents);
 
     @Override
-    public abstract void process(World world);
+    public abstract void world(World world);
 
     private TabPane tabPane;
 }

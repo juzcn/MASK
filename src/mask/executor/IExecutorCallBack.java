@@ -5,18 +5,22 @@
  */
 package mask.executor;
 
+import mask.agent.Agent;
 import mask.executor.MasterExecutor.State;
-import mask.logging.ILogger;
+import mask.world.World;
 
 /**
  *
  * @author zj
  */
-public interface IMonitor extends ILogger {
+public interface IExecutorCallBack {
 
-    public void durationCallBack(int duration);
+    public void time(int time);
 
-    public void timeCallBack(int time);
+    public void state(State state);
 
-    public void stateCallBack(State state);
+    public void agents(Agent[] agents);
+
+    public void world(World world);
+
 }

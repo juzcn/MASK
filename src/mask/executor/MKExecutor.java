@@ -26,16 +26,6 @@ public abstract class MKExecutor<T extends MKConfig<? extends IWorld>> implement
         return executor;
     }
 
-    public static LocalExecutor newLocalExecutor(LocalModel config, Monitor monitor, FileLogger... loggers) {
-        executor = new LocalExecutor(config, monitor, loggers);
-        return (LocalExecutor) executor;
-    }
-
-    public static DistributedExecutor newDistributedExecutor(DistributedModel config, Monitor monitor, FileLogger... loggers) {
-        executor = new DistributedExecutor(config, monitor, loggers);
-        return (DistributedExecutor) executor;
-    }
-
     public static RemoteExecutor newRemoteExecutor(String process) {
         executor = new RemoteExecutor(process);
         return (RemoteExecutor) executor;
