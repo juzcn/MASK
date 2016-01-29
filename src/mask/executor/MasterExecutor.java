@@ -30,9 +30,10 @@ import mask.world.IWorld;
 public abstract class MasterExecutor<T extends Model<? extends IWorld>> extends MKExecutor<T> {
 
     protected IMonitor monitor;
-    protected int maxTime = 100;
-    protected int duration;
-    protected int stopAt = 100;
+    private int maxTime = 100;
+    private int pauseAt = 0;
+    private int duration = 0;
+
     protected BlockingQueue<Command> commands = new LinkedBlockingQueue<>();
     protected ExecutorService monitorThread;
     private FileLogging fileLogging;
@@ -66,164 +67,53 @@ public abstract class MasterExecutor<T extends Model<? extends IWorld>> extends 
         run();
     }
 
+    public void threadStart(int maxTime) {
+        this.maxTime = maxTime;
+        new Thread(this).start();
+    }
+
     public int steps() {
         return config.getSteps();
     }
 
+    /**
+     * @param maxTime the maxTime to set
+     */
+    public void setMaxTime(int maxTime) {
+        this.maxTime = maxTime;
+    }
+
+    /**
+     * @param pauseAt the pauseAt to set
+     */
+    public void setPauseAt(int pauseAt) {
+        this.pauseAt = pauseAt;
+    }
+
+    /**
+     * @param duration the duration to set
+     */
+    public void setDuration(int duration) {
+        this.duration = duration;
+    }
+
     public static enum Command {
-        Run, Stop, Pause, Goto, Speed, FastForward, SlowForward, StepRun
+        Run, Stop, Pause, StepRun
     }
 
     public static enum State {
-        Loaded, Running, Stopped, Paused
-    }
-
-    public void command(Command c) {
-        commands.offer(c);
-    }
-
-    public void start(int maxTime, int duration, int stopAt) {
-        this.stopAt = stopAt;
-        this.maxTime = maxTime;
-        this.duration = duration;
-        if (monitor != null) {
-            new Thread(this).start();
-        } else {
-            run();
-        }
-    }
-
-    public void setRunParams(int maxTime, int duration, int stopAt) {
-        this.stopAt = stopAt;
-        this.maxTime = maxTime;
-        this.duration = duration;
-    }
-
-    public void start(int maxTime, int duration) {
-        start(maxTime, duration, maxTime);
-    }
-
-    private Command take() {
-        try {
-//            commands.clear();
-            return commands.take();
-        } catch (InterruptedException ex) {
-            Logger.getLogger(MasterExecutor.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return null;
-    }
-
-    private boolean stepRun;
-
-    private boolean processCommand() {
-
-        boolean exit = false;
-
-        if (time > stopAt) {
-            setState(State.Paused);
-        }
-
-        MasterExecutor.Command command;
-
-        if (state == State.Running) {
-            nonblocking:
-            do {
-                command = commands.poll();
-                if (command == null) {
-                    break nonblocking;
-                }
-                switch (command) {
-                    case Run:
-                        break;
-                    case Stop:
-                        exit = true;
-                        break nonblocking;
-                    case Speed:
-                        break;
-                    case SlowForward:
-                        if (duration > 0) {
-                            duration = duration * 2;
-                        } else {
-                            duration = 1000;
-                        }
-                        monitor.durationCallBack(duration);
-                        break;
-                    case FastForward:
-                        duration = duration / 2;
-                        monitor.durationCallBack(duration);
-                        break;
-                    case Pause:
-                        setState(State.Paused);
-                        break;
-                    case StepRun:
-                        stepRun = true;
-                        setState(State.Paused);
-                        break;
-                }
-            } while (true);
-        }
-
-        if (exit) {
-            return exit;
-        }
-        if (state == State.Loaded || state == State.Paused) {
-            blockingWhile:
-            do {
-                command = take();
-                switch (command) {
-                    case Run:
-                        if (time <= stopAt) {
-                            setState(State.Running);
-                            stepRun = false;
-                            break blockingWhile;
-                        }
-                        break;
-                    case Stop:
-                        exit = true;
-                        break blockingWhile;
-                    case Speed:
-                        break;
-                    case SlowForward:
-                        if (duration > 0) {
-                            duration = duration * 2;
-                        } else {
-                            duration = 1000;
-                        }
-                        monitor.durationCallBack(duration);
-                        break;
-                    case FastForward:
-                        duration = duration / 2;
-                        monitor.durationCallBack(duration);
-                        break;
-                    case Pause:
-                        break;
-                    case StepRun:
-                        if (!stepRun) {
-                            setState(State.Paused);
-                            stepRun = true;
-                        }
-                        break blockingWhile;
-                }
-
-            } while (true);
-        }
-        monitor.timeCallBack(time);
-        return exit;
+        Running, Stopped, Paused
     }
 
     public void cycleRun() {
-        long beginMills = 0L;
-        long waitMills;
         Future<?> updateWorld1 = null;
         Future<?> updateWorld2 = null;
         Future<?> updateAgent1 = null;
         Future<?> updateAgent2 = null;
 
-        setState(State.Loaded);
         for (time = 1; time <= maxTime; time++) {
 
-            service.timeTicked();
-            System.out.println("timeTick =" + time);
+            System.out.println("Time =" + time);
 
             world().logging();
             if (monitor == null) {
@@ -254,19 +144,12 @@ public abstract class MasterExecutor<T extends Model<? extends IWorld>> extends 
                     }
                     updateWorld1 = updateWorld2;
                 }
-                if (processCommand()) {
-                    break;
-                }
-            }
-
-            if (duration > 0) {
-                beginMills = System.currentTimeMillis();
             }
 
             for (step = 1; step <= steps(); step++) {
                 do {
                     service.setChanged(false);
-                    stepRun();
+                    loopRun();
                 } while (service.isChanged());
             }
             if (service.getAgentNumber() == 0) {
@@ -295,23 +178,6 @@ public abstract class MasterExecutor<T extends Model<? extends IWorld>> extends 
                 updateAgent1 = updateAgent2;
             }
 
-            if (duration > 0) {
-                waitMills = duration - System.currentTimeMillis() + beginMills;
-                if (waitMills > 0) {
-                    try {
-                        Thread.sleep(waitMills);
-                    } catch (InterruptedException ex) {
-                        Logger.getLogger(MasterExecutor.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-            }
-        }
-    }
-
-    public void setState(State state) {
-        this.state = state;
-        if (monitor != null) {
-            monitor.stateCallBack(state);
         }
     }
 
@@ -344,7 +210,7 @@ public abstract class MasterExecutor<T extends Model<? extends IWorld>> extends 
         }
     }
 
-    protected abstract void stepRun();
+    protected abstract void loopRun();
 
     protected void setup() {
         startLogging();
@@ -378,7 +244,6 @@ public abstract class MasterExecutor<T extends Model<? extends IWorld>> extends 
 //        world().close();
         // step 12: close trace file
         stopLogging();
-        setState(State.Stopped);
 
     }
 
@@ -390,8 +255,40 @@ public abstract class MasterExecutor<T extends Model<? extends IWorld>> extends 
         return service.getAllResults();
     }
 
+    public void speed(int duration) {
+        this.duration = duration;
+        commands.add(Command.Run);
+    }
+
+    public void pauseAt(int pauseAt) {
+        this.pauseAt = pauseAt;
+        commands.add(Command.Run);
+    }
+
+    public void stepRun() {
+        commands.offer(Command.StepRun);
+    }
+
+    public void pause() {
+        commands.add(Command.Pause);
+    }
+
+    public void resume() {
+        commands.add(Command.Run);
+    }
+
+    public void stop() {
+        commands.add(Command.Stop);
+    }
+
+    private Command command;
+    private long beginMills;
+    private long waitMills;
+
     @Override
     public void run() {
+        state = State.Running;
+
         if (this.isLoggingEnabled()) {
             setup();
             prepare();
@@ -400,21 +297,64 @@ public abstract class MasterExecutor<T extends Model<? extends IWorld>> extends 
             afterStop();
         } else {
             prepare();
+            forLabel:
             for (time = 1; time <= maxTime; time++) {
-                service.timeTicked();
-                System.out.println("timeTick =" + time);
+                System.out.println("Time =" + time);
+
+                if (duration > 0) {
+                    beginMills = System.currentTimeMillis();
+                }
+
+                while ((command = commands.poll()) != null) {
+                    if (time == pauseAt) {
+                        state = State.Paused;
+                        try {
+                            commands.offer(commands.take());
+                        } catch (InterruptedException ex) {
+                            Logger.getLogger(MasterExecutor.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                        state = State.Running;
+                    }
+                    switch (command) {
+                        case Pause:
+                            pauseAt = time;
+                            break;
+                        case Run:
+                            break;
+                        case StepRun:
+                            pauseAt = time + 1;
+                            break;
+                        case Stop:
+                            break forLabel;
+                    }
+                }
+
                 for (step = 1; step <= steps(); step++) {
                     do {
                         service.setChanged(false);
-                        stepRun();
+                        loopRun();
                     } while (service.isChanged());
                 }
+
                 if (service.getAgentNumber() == 0) {
                     break;
                 }
+
+                if (duration > 0) {
+                    waitMills = duration - System.currentTimeMillis() + beginMills;
+                    if (waitMills > 0) {
+                        try {
+                            Thread.sleep(waitMills);
+                        } catch (InterruptedException ex) {
+                            Logger.getLogger(MasterExecutor.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    }
+                }
             }
+            
             stopRun();
-//            world().close();
+            state = State.Stopped;
+
         }
     }
 

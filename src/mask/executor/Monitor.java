@@ -33,14 +33,8 @@ public abstract class Monitor extends Application implements IMonitor {
     public Label currentValue;
     public Label stateLabel;
     protected MasterExecutor executor;
-    protected int duration;
-    protected int maxTime;
-    protected int stopAt;
 
     public Monitor() {
-        duration = 1000;
-        maxTime = 100;
-        stopAt = 100;
     }
 
     @Override
@@ -61,20 +55,13 @@ public abstract class Monitor extends Application implements IMonitor {
 
     protected abstract MasterExecutor newExecutor();
     public TextField durationValue;
-    private TextField stopActValue;
+    private TextField pauseAtValue;
     private TextField maxTimeValue;
 
     private void load() {
         executor = newExecutor();
-        executor.start(maxTime, duration, stopAt);
-    }
-
-    private void issueCommand(MasterExecutor.Command command) {
-        duration = Integer.parseInt(durationValue.getText());
-        maxTime = Integer.parseInt(maxTimeValue.getText());
-        stopAt = Integer.parseInt(stopActValue.getText());
-        executor.setRunParams(maxTime, duration, stopAt);
-        executor.command(command);
+        executor.pauseAt(1);
+        executor.threadStart(Integer.parseInt(maxTimeValue.getText()));
     }
 
     @Override
@@ -88,13 +75,13 @@ public abstract class Monitor extends Application implements IMonitor {
         currentValue.setPrefWidth(35);
         currentValue.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
         Label maxTimeLabel = new Label("Total");
-        maxTimeValue = new TextField(Long.toString(maxTime));
+        maxTimeValue = new TextField(Long.toString(200));
         maxTimeValue.setPrefColumnCount(5);
 //        Button gotoButton = new Button("Stop At");
         Label stopAtLabel = new Label("Stop At");
-        stopActValue = new TextField(Long.toString(maxTime));
-        stopActValue.setPrefColumnCount(5);
-        durationValue = new TextField(Long.toString(duration));
+        pauseAtValue = new TextField(Long.toString(200));
+        pauseAtValue.setPrefColumnCount(5);
+        durationValue = new TextField(Long.toString(500));
         durationValue.setPrefColumnCount(4);
 
         stateLabel = new Label("Click Load!");
@@ -102,7 +89,7 @@ public abstract class Monitor extends Application implements IMonitor {
         loadButton.setOnAction(e -> {
             if (executor != null) {
                 if (executor.getState() != MasterExecutor.State.Stopped) {
-                    executor.command(LocalExecutor.Command.Stop);
+                    executor.stop();
                     try {
                         Thread.sleep(2000L);
                     } catch (InterruptedException ex) {
@@ -118,52 +105,69 @@ public abstract class Monitor extends Application implements IMonitor {
         Button runButton = new Button("Run");
         runButton.setOnAction(e -> {
             if (executor != null) {
-                issueCommand(MasterExecutor.Command.Run);
+                executor.setPauseAt(Integer.parseInt(pauseAtValue.getText()));
+                executor.setMaxTime(Integer.parseInt(maxTimeValue.getText()));
+                executor.setDuration(Integer.parseInt(durationValue.getText()));
+                executor.resume();
             }
         });
 
         Button stepButton = new Button("Step Run");
         stepButton.setOnAction(e -> {
             if (executor != null) {
-                issueCommand(MasterExecutor.Command.StepRun);
+                executor.setMaxTime(Integer.parseInt(maxTimeValue.getText()));
+                executor.setDuration(Integer.parseInt(durationValue.getText()));
+                executor.stepRun();
             }
         });
 
         Button stopButton = new Button("Stop");
         stopButton.setOnAction(e -> {
             if (executor != null) {
-                issueCommand(MasterExecutor.Command.Stop);
+                executor.stop();
             }
         });
 
         Button pauseButton = new Button("Pause");
         pauseButton.setOnAction(e -> {
             if (executor != null) {
-                issueCommand(MasterExecutor.Command.Pause);
+                executor.pause();
             }
         });
 
         Button fastButton = new Button("Fast");
         fastButton.setOnAction(e -> {
             if (executor != null) {
-                issueCommand(MasterExecutor.Command.FastForward);
+                int duration = Integer.parseInt(durationValue.getText());
+                if (duration > 0) {
+                    duration = duration / 2;
+                }
+                durationValue.setText(Integer.toString(duration));
+                executor.speed(duration);
             }
 
         });
         Button slowButton = new Button("Slow");
         slowButton.setOnAction(e -> {
             if (executor != null) {
-                issueCommand(MasterExecutor.Command.SlowForward);
+                int duration = Integer.parseInt(durationValue.getText());
+                if (duration > 0) {
+                    duration = duration * 2;
+                } else {
+                    duration = 1000;
+                }
+                durationValue.setText(Integer.toString(duration));
+                executor.speed(duration);
             }
         });
         Button speedButton = new Button("Speed");
         speedButton.setOnAction(e -> {
             if (executor != null) {
-                issueCommand(MasterExecutor.Command.Speed);
+                executor.speed(Integer.parseInt(durationValue.getText()));
             }
         });
 
-        hBox.getChildren().addAll(stateLabel, loadButton, currentLabel, currentValue, maxTimeLabel, maxTimeValue, runButton, stepButton, stopAtLabel, stopActValue,
+        hBox.getChildren().addAll(stateLabel, loadButton, currentLabel, currentValue, maxTimeLabel, maxTimeValue, runButton, stepButton, stopAtLabel, pauseAtValue,
                 stopButton, pauseButton, fastButton, slowButton, speedButton, durationValue);
 
         hBox.setSpacing(10);
@@ -186,7 +190,7 @@ public abstract class Monitor extends Application implements IMonitor {
     @Override
     public void stop() {
         if (executor != null) {
-            executor.command(LocalExecutor.Command.Stop);
+            executor.stop();
         }
     }
 

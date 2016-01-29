@@ -61,8 +61,6 @@ public interface IService extends ISimpleMessaging {
 
     public Agent[] getLogging();
 
-    public default void timeTicked() {
-    }
     public void setChanged(boolean changed);
 
     public boolean isChanged();

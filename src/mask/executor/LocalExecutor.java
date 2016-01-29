@@ -44,7 +44,7 @@ public class LocalExecutor<T extends LocalModel<? extends IWorld>> extends Maste
     }
 
     @Override
-    protected void stepRun() {
+    protected void loopRun() {
         container().run();
     }
 

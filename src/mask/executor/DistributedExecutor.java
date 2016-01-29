@@ -54,7 +54,7 @@ public class DistributedExecutor<T extends DistributedModel<? extends IWorld>> e
     }
 
     @Override
-    protected void stepRun() {
+    protected void loopRun() {
         service.sendToExecutorGroup(time + "," + step);
         service.executorWait(nRemotes());
     }
