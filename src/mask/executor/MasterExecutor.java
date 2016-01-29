@@ -102,18 +102,15 @@ public abstract class MasterExecutor<T extends Model<? extends IWorld>> extends 
         Running, Stopped, Paused
     }
 
-
     public State getState() {
         return state;
     }
-
 
     protected abstract void loopRun();
 
     protected abstract void prepare();
 
     protected abstract void stopRun();
-
 
     public <T extends Serializable> T getResult() {
         return service.getResult();
@@ -180,19 +177,26 @@ public abstract class MasterExecutor<T extends Model<? extends IWorld>> extends 
                 beginMills = System.currentTimeMillis();
             }
 
-            while ((command = commands.poll()) != null) {
-                if (time == pauseAt) {
-                    setState(State.Paused);
-                    try {
-                        commands.offer(commands.take());
-                    } catch (InterruptedException ex) {
-                        Logger.getLogger(MasterExecutor.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    setState(State.Running);
+            if (time == pauseAt) {
+                setState(State.Paused);
+                try {
+                    commands.offer(commands.take());
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(MasterExecutor.class.getName()).log(Level.SEVERE, null, ex);
                 }
+                setState(State.Running);
+            }
+
+            while ((command = commands.poll()) != null) {
                 switch (command) {
                     case Pause:
-                        pauseAt = time;
+                        setState(State.Paused);
+                        try {
+                            commands.offer(commands.take());
+                        } catch (InterruptedException ex) {
+                            Logger.getLogger(MasterExecutor.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                        setState(State.Running);
                         break;
                     case Run:
                         break;

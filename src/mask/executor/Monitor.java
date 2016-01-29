@@ -55,7 +55,7 @@ public abstract class Monitor extends Application implements IExecutorCallBack {
 
     private void load() {
         executor = newExecutor();
-        executor.pauseAt(1);
+        executor.setPauseAt(1);
         executor.threadStart(Integer.parseInt(maxTimeValue.getText()));
     }
 
