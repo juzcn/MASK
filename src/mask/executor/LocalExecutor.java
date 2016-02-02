@@ -15,7 +15,7 @@ import mask.service.MKService;
  */
 public class LocalExecutor<T extends LocalModel<? extends IWorld>> extends MasterExecutor<T> {
 
-    public LocalExecutor(T modelConfig, IExecutorCallBack callback) {
+    public LocalExecutor(T modelConfig, IMonitor callback) {
         super(modelConfig, callback);
         service = new MKService();
         service.setup();

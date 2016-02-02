@@ -177,8 +177,7 @@ public class MKService extends SimpleMessaging implements IService {
         System.out.println("Found " + list.size());
         list.toArray(ids);
         return ids;
-
-    }
+     }
 
     @Override
     public <T extends Serializable> void writeResult(T result) {
@@ -201,7 +200,7 @@ public class MKService extends SimpleMessaging implements IService {
     }
 
     @Override
-    public Agent[] getLogging() {
+    public Agent[] getAgents() {
         List<Agent> list = receiveAll(loggingChannel);
         if (list.isEmpty()) {
             return null;

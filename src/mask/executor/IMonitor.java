@@ -13,11 +13,11 @@ import mask.world.World;
  *
  * @author zj
  */
-public interface IExecutorCallBack {
+public interface IMonitor  {
 
-    public void time(int time);
+    public void onTime(int time);
 
-    public void state(State state);
+    public void onState(State state);
 
     public void agents(Agent[] agents);
 

@@ -15,7 +15,7 @@ import mask.utils.Utils;
  */
 public class DistributedExecutor<T extends DistributedModel<? extends IWorld>> extends MasterExecutor<T> {
 
-    public DistributedExecutor(T config, IExecutorCallBack callback) {
+    public DistributedExecutor(T config, IMonitor callback) {
         super(config, callback);
         service = (IService) Utils.getBean("java:global.MASKBeans.MASKBeans-ejb.ServiceBean");
         service.setup();

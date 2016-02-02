@@ -59,7 +59,7 @@ public interface IService extends ISimpleMessaging {
 
     public void logging(Agent agent);
 
-    public Agent[] getLogging();
+    public Agent[] getAgents();
 
     public void setChanged(boolean changed);
 

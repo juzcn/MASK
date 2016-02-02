@@ -22,7 +22,7 @@ import mask.world.IWorld;
  */
 public abstract class MasterExecutor<T extends Model<? extends IWorld>> extends MKExecutor<T> {
 
-    protected IExecutorCallBack callback;
+    protected IMonitor callback;
     private int maxTime = 100;
     private int pauseAt = 0;
     private int duration = 0;
@@ -40,17 +40,17 @@ public abstract class MasterExecutor<T extends Model<? extends IWorld>> extends 
         return (DistributedExecutor) executor;
     }
 
-    public static LocalExecutor newLocalExecutor(LocalModel config, IExecutorCallBack callback) {
+    public static LocalExecutor newLocalExecutor(LocalModel config, IMonitor callback) {
         executor = new LocalExecutor(config, callback);
         return (LocalExecutor) executor;
     }
 
-    public static DistributedExecutor newDistributedExecutor(DistributedModel config, IExecutorCallBack callback) {
+    public static DistributedExecutor newDistributedExecutor(DistributedModel config, IMonitor callback) {
         executor = new DistributedExecutor(config, callback);
         return (DistributedExecutor) executor;
     }
 
-    public MasterExecutor(T config, IExecutorCallBack callback) {
+    public MasterExecutor(T config, IMonitor callback) {
         super(config);
         this.callback = callback;
     }
@@ -153,7 +153,7 @@ public abstract class MasterExecutor<T extends Model<? extends IWorld>> extends 
     private void setState(State state) {
         this.state = state;
         if (callback != null) {
-            callback.state(state);
+            callback.onState(state);
         }
     }
 
@@ -167,7 +167,7 @@ public abstract class MasterExecutor<T extends Model<? extends IWorld>> extends 
             System.out.println("Time =" + time);
 
             if (callback != null) {
-                callback.time(time);
+                callback.onTime(time);
             }
 
             if (this.isLoggingEnabled() && world() != null) {
@@ -217,7 +217,7 @@ public abstract class MasterExecutor<T extends Model<? extends IWorld>> extends 
             }
 
             if (callback != null) {
-                callback.agents(service.getLogging());
+                callback.agents(service.getAgents());
             }
             if (service.getAgentNumber() == 0) {
                 break;
@@ -245,7 +245,7 @@ public abstract class MasterExecutor<T extends Model<? extends IWorld>> extends 
             if (world() != null) {
                 callback.world(world().getWorld());
             }
-            callback.agents(service.getLogging());
+            callback.agents(service.getAgents());
         }
 
         setState(State.Stopped);
