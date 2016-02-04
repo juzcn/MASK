@@ -52,7 +52,7 @@ public class Agent extends RunUnit implements Serializable {
         this.process = process();
 
         if (name == null || name.equals("")) {
-            this.name = this.process + ":" + this.className + "[" + this.sequence + "}";
+            this.name = this.process + ":" + this.className + "[" + this.sequence + "]";
         } else {
             this.name = name;
         }
@@ -163,7 +163,7 @@ public class Agent extends RunUnit implements Serializable {
     /**
      * @return the time
      */
-    public long getTime() {
+    public int getTime() {
         return time;
     }
 
